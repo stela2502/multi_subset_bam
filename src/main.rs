@@ -16,6 +16,8 @@ use std::collections::HashSet;
 
 use std::time::SystemTime;
 
+use indicatif::{ProgressBar, MultiProgress, ProgressStyle};
+
 
 #[derive(Parser)]
 #[clap(version = "0.1.0", author = "Stefan L. <stefan.lang@med.lu.se>")]
@@ -69,15 +71,32 @@ fn main() {
     }
     let tag: [u8; 2]  = opts.tag.as_bytes().try_into().unwrap();
     
+    let m = MultiProgress::new();
+    let pb = m.add(ProgressBar::new(5000));
+
+    let spinner_style = ProgressStyle::with_template("{prefix:.bold.dim} {spinner} {wide_msg}")
+            .unwrap()
+            .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
+    pb.set_style(spinner_style);
+    pb.set_message( "" );
+
     let bc = read_bc( opts.values );
     let mut reads = 0;
+    let mut lines:u64 = 0;
+    let split = 1_000_000_u64;
+
     loop {
         match reader.read_into(&mut record) {
             Ok(true) => {},
             Ok(false) => break,
             Err(e) => panic!("{}", e),
         }
-
+        if lines % split == 0{
+            //println!("A log should be printed?");
+            pb.set_message( format!("{} mio reads processed", lines / split) );
+            pb.inc(1);
+        }
+        lines +=1;
         let tags_data = record.tags().iter();
         for (tag_id, tag_value) in tags_data {
             if tag_id == tag {

@@ -9,3 +9,5 @@ edition = "2021"
 
 bam = "*"
 clap = { version = "3.0.14", features = ["derive"] }
+indicatif = {version = "*", features = ["rayon"]}
+
