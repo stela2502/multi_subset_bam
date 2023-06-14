@@ -24,6 +24,6 @@ samtools view testData/outpath/subset.bam | wc -l
 
 This should tell you that there are 11 reads for the 4 barcodes.
 
-By defualt this tool will query the CB:Z tag (e.g. 'GAGCAGACAGGCAGTA') of the bam file and only write the reads matching to the entries in the 'values' barcodes table into the outpfile. If you have cell ids like 'GAGCAGACAGGCAGTA-1' you want to use the option ``-t "CR"``.
+By default this tool will query the CB:Z tag (e.g. 'GAGCAGACAGGCAGTA') of the bam file and only write the reads matching to the entries in the 'values' barcodes table into the outfile. If you have cell ids like 'GAGCAGACAGGCAGTA-1' you want to use the option ``-t "CR"``.
 
 
