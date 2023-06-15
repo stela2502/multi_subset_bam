@@ -90,7 +90,7 @@ fn main() {
             let min = milli % 60;
             milli= (milli -min) /60;
 
-            println!("I have selected {reads} reads from the bam file in {milli}h {min}min {sec} sec {mil}milli sec\n");
+            println!("\nI have selected {reads} reads from the bam file in {milli}h {min}min {sec} sec {mil}milli sec\n");
         },
         Err(e) => {println!("Error: {e:?}");}
     }
