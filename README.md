@@ -18,8 +18,9 @@ The executable will be ``target/release/subset_bam``.
 On a Linux system:
 
 ```
-./target/release/subset_bam -b testData/test.bam -b testData/barcodes.txt -o testData/outpath/subset.bam
-samtools view testData/outpath/subset.bam | wc -l
+./target/release/subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_
+samtools view testData/outpath/subset_barcodes.bam | wc -l
+samtools view testData/outpath/subset_barcodes2.bam | wc -l
 ```
 
 This should tell you that there are 11 reads for the 4 barcodes.
