@@ -16,6 +16,7 @@ use std::collections::HashSet;
 
 use std::time::SystemTime;
 
+use subset_bam::Subsetter;
 
 #[derive(Parser)]
 #[clap(version = "0.1.0", author = "Stefan L. <stefan.lang@med.lu.se>")]
@@ -53,15 +54,9 @@ fn main() {
 
     let mut reader = bam::BamReader::from_path( &opts.bam , 1).unwrap();
 
-    let o1 = PathBuf::from( &opts.ofile );
-    let f1 = match File::create(o1){
-        Ok(file) => file,
-        Err(err) => panic!("The file {} cound not be created: {err}", &opts.ofile )
-    };
-    let output = io::BufWriter::new( &f1 );
-    let mut writer = bam::BamWriter::build()
-        .write_header(true)
-        .from_stream(output, reader.header().clone()).unwrap();
+    let mut subsetter = Subsetter::new():
+
+    subsetter.read_simple_list( opts.values, opts.ofile.to_string() );
 
     let mut record = bam::Record::new();
     if opts.tag.len() != 2 {
@@ -78,26 +73,10 @@ fn main() {
             Err(e) => panic!("{}", e),
         }
 
+        reads += subsetter.process_record( record, tag );
         let tags_data = record.tags().iter();
-        for (tag_id, tag_value) in tags_data {
-            if tag_id == tag {
-                if let TagValue::String(tag_value_str, _) = tag_value {
-                    match std::str::from_utf8(tag_value_str){
-                        Ok(val) => {
-                            if bc.contains(val) {
-                                //println!("{}:Z entry: {:?}", &opts.tag, val );
-                                writer.write(&record).unwrap();
-                                reads += 1;
-                            }
-                        },
-                        Err(e) => { 
-                            panic!("I got an error: {e:?}")
-                        },
-                    };
-                }
-            }
-        }
     }
+
     match now.elapsed() {
         Ok(elapsed) => {
             let mut milli = elapsed.as_millis();
@@ -115,5 +94,7 @@ fn main() {
         },
         Err(e) => {println!("Error: {e:?}");}
     }
+
+    subsetter.print();
     
 }
