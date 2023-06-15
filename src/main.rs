@@ -30,7 +30,10 @@ struct Opts {
     tag: String,
     /// the values of the bam tag to selet for (a file with one value per line)
     #[clap(short, long)]
-    values: String,
+    values: Option<String>,
+    /// more groups of cell ids to export ()
+    #[clap(short, long)]
+    values: Option<String>,
     /// the filename for the bam file subset
     #[clap(short, long)]
     ofile: String,
