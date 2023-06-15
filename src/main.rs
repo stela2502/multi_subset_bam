@@ -3,16 +3,6 @@ use clap::Parser;
 
 extern crate bam;
 use bam::RecordReader;
-use bam::RecordWriter;
-
-use std::io;
-use std::path::PathBuf;
-use std::fs::File;
-use bam::record::tags::TagValue;
-
-use std::io::BufReader;
-use std::io::BufRead;
-use std::collections::HashSet;
 
 use std::time::SystemTime;
 
@@ -29,28 +19,14 @@ struct Opts {
     /// the bam tag you want to look for
     #[clap(default_value="CR", short, long)]
     tag: String,
-    /// the values of the bam tag to selet for (a file with one value per line)
+    /// the values of the bam tags file(s) (comma separated filenames) to selet for (a file with one value per line)
     #[clap(short, long)]
-    values: Option<String>,
-    /// more groups of cell ids to export ()
-    #[clap(short, long)]
-    values: Option<String>,
+    values: String,
     /// the filename for the bam file subset
     #[clap(short, long)]
     ofile: String,
 }
 
-fn read_bc( bc_file:String )-> HashSet<String> {
-    let file = File::open(bc_file).unwrap();
-    let reader = BufReader::new(file);
-    let mut tag_set: HashSet<String> = HashSet::new();
-    for line in reader.lines() {
-        if let Ok(tag_value) = line {
-            tag_set.insert(tag_value);
-        }
-    }
-    return tag_set
-}
 
 fn main() {
     let now = SystemTime::now();
@@ -59,9 +35,12 @@ fn main() {
 
     let mut reader = bam::BamReader::from_path( &opts.bam , 1).unwrap();
 
-    let mut subsetter = Subsetter::new():
+    let mut subsetter = Subsetter::new();
 
-    subsetter.read_simple_list( opts.values, opts.ofile.to_string() );
+    for fname in opts.values.split(','){
+        subsetter.read_simple_list( fname.to_string(), opts.ofile.to_string(), reader.header().clone() );
+    }
+    
 
     let mut record = bam::Record::new();
     if opts.tag.len() != 2 {
@@ -78,7 +57,6 @@ fn main() {
     pb.set_style(spinner_style);
     pb.set_message( "" );
 
-    let bc = read_bc( opts.values );
     let mut reads = 0;
     let mut lines:u64 = 0;
     let split = 1_000_000_u64;
@@ -96,7 +74,7 @@ fn main() {
         }
         lines +=1;
 
-        reads += subsetter.process_record( record, tag );
+        reads += subsetter.process_record( record.clone(), tag );
     }
 
     match now.elapsed() {
@@ -118,5 +96,6 @@ fn main() {
     }
 
     subsetter.print();
+
     
 }

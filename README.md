@@ -18,7 +18,7 @@ The executable will be ``target/release/subset_bam``.
 On a Linux system:
 
 ```
-./target/release/subset_bam -i testData/test.bam -b testData/barcodes.txt -o testData/outpath/subset.bam
+./target/release/subset_bam -b testData/test.bam -b testData/barcodes.txt -o testData/outpath/subset.bam
 samtools view testData/outpath/subset.bam | wc -l
 ```
 
