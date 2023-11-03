@@ -1,3 +1,4 @@
+[![Rust](https://github.com/stela2502/multi_subset_bam/actions/workflows/rust.yml/badge.svg)](https://github.com/stela2502/multi_subset_bam/actions/workflows/rust.yml)
 
 # MultiSubsetBam
 
