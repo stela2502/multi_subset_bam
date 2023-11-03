@@ -1,5 +1,5 @@
 [package]
-name = "subset_bam"
+name = "multi_subset_bam"
 version = "0.1.0"
 edition = "2021"
 

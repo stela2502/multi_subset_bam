@@ -8,7 +8,7 @@ use std::time::SystemTime;
 
 use indicatif::{ProgressBar, MultiProgress, ProgressStyle};
 
-use subset_bam::Subsetter;
+use multi_subset_bam::Subsetter;
 
 #[derive(Parser)]
 #[clap(version = "0.1.0", author = "Stefan L. <stefan.lang@med.lu.se>")]

@@ -1,6 +1,10 @@
+
 # MultiSubsetBam
 
 A Rust way to subset a bam based on an bam internal key.
+
+In comparison to the Illumina subset_bam tool this one is able to create up to 1000 subsets in one run of the program.
+As reading and writing the BAM file is the most time consuming step in the split procedure this program should (in theory) speed the splitting of multiple subsets up by the amount of supbsets you want to split - e.g 10x for 10 clusters of cells to split.
 
 
 # Install
@@ -11,14 +15,15 @@ finally compile the tool for your computer:
 cargo build -r
 ```
 
-The executable will be ``target/release/subset_bam``.
+The executable will be ``target/release/multi_subset_bam``.
 
 # Testing
 
 On a Linux system:
 
 ```
-./target/release/subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_
+./target/release/multi_subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_
+
 samtools view testData/outpath/subset_barcodes.bam | wc -l
 samtools view testData/outpath/subset_barcodes2.bam | wc -l
 ```
