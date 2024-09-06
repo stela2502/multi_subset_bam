@@ -7,6 +7,8 @@ A Rust way to subset a bam based on an bam internal key.
 In comparison to the Illumina subset_bam tool this one is able to create up to 1000 subsets in one run of the program.
 As reading and writing the BAM file is the most time consuming step in the split procedure this program should (in theory) speed the splitting of multiple subsets up by the amount of supbsets you want to split - e.g 10x for 10 clusters of cells to split.
 
+By default this tool will query the CB:Z tag (e.g. 'GAGCAGACAGGCAGTA') of the bam file and only write the reads matching to the entries in the 'values' barcodes table into the outfile. I recommend you only use the sequence part of your cell names - not the "-1".
+
 
 # Install
 
