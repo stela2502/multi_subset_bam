@@ -58,8 +58,9 @@ fn main() {
     pb.set_message( "" );
 
     let mut reads = 0;
-    let mut lines:u64 = 0;
     let split = 1_000_000_u64;
+
+    let mut records_tmp= Vec<Record>::with_capacity(1_000_000);
 
     loop {
         match reader.read_into(&mut record) {
@@ -67,15 +68,22 @@ fn main() {
             Ok(false) => break,
             Err(e) => panic!("{}", e),
         }
-        if lines % split == 0{
+        records_tmp.push( record.clone() );
+
+        if records_tmp.len() % 1_000_000 == 0{
             //println!("A log should be printed?");
             pb.set_message( format!("{} mio reads processed", lines / split) );
             pb.inc(1);
+            reads += subsetter.process_record( records_tmp, tag );
+            records_tmp.clear();
         }
-        lines +=1;
 
-        reads += subsetter.process_record( record.clone(), tag );
     }
+    
+    if !records_tmp.is_empty() {
+        reads += subsetter.process_record(&records_tmp, &tag);
+    }
+
 
     match now.elapsed() {
         Ok(elapsed) => {
