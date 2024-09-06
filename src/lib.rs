@@ -16,7 +16,7 @@ impl Subsetter {
     pub fn new() -> Self {
         Self {
             tags: BTreeMap::new(),
-            ofile_writers: Vec::with_capacity(100),
+            ofile_writer_count: usize Vec::with_capacity(100),
             ofile_names: Vec::with_capacity(100),
         }
     }

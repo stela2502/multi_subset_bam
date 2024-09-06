@@ -74,12 +74,12 @@ fn main() {
             //println!("A log should be printed?");
             pb.set_message( format!("{} mio reads processed", lines / split) );
             pb.inc(1);
-            reads += subsetter.process_record( records_tmp, tag );
+            sorted_ids += subsetter.process_record( records_tmp, tag );
             records_tmp.clear();
         }
 
     }
-    
+
     if !records_tmp.is_empty() {
         reads += subsetter.process_record(&records_tmp, &tag);
     }
