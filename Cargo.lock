@@ -280,6 +280,7 @@ dependencies = [
  "bam",
  "clap",
  "indicatif",
+ "num_cpus",
  "rayon",
 ]
 

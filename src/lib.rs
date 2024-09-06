@@ -1,44 +1,44 @@
 use rayon::prelude::*;
 use std::collections::BTreeMap;
 use std::fs::File;
-use std::io::{self, BufRead, BufWriter};
+use std::io::{self, BufRead, BufWriter, BufReader};
 use std::path::{Path, PathBuf};
 use bam::{BamReader, BamWriter, Record, RecordWriter };
 use bam::record::tags::TagValue;
 
+
 pub struct Subsetter {
     tags: BTreeMap<String, usize>, // Storage for the keys to match
-    ofile_writers: Vec<BamWriter<BufWriter<File>>>, // A vector of outfiles
-    ofile_names: Vec<String>, // The outfile names
+    ofile_writers: usize,// Vec<BamWriter<BufWriter<File>>>, // A vector of outfiles
+    pub ofile_names: Vec<String>, // The outfile names
 }
 
 impl Subsetter {
     pub fn new() -> Self {
         Self {
             tags: BTreeMap::new(),
-            ofile_writer_count: usize Vec::with_capacity(100),
+            ofile_writers: 0 ,//Vec::with_capacity(100),
             ofile_names: Vec::with_capacity(100),
         }
     }
 
-    pub fn read_simple_list(&mut self, bc_file: &str, prefix: &str, header: bam::Header) {
-        let file = File::open(bc_file).unwrap();
-        let reader = io::BufReader::new(file);
+    /// read a simple list of cell ids
+    pub fn read_simple_list (&mut self, bc_file:String, prefix:String ) {
+        let file = File::open(bc_file.to_string()).unwrap();
+        let reader = BufReader::new(file);
         for line in reader.lines() {
             if let Ok(tag_value) = line {
-                self.tags.insert(tag_value.clone(), self.tags.len());
-                let ofile_name = format!("{}{}.bam", prefix, self.tags.len() - 1);
-                self.ofile_names.push(ofile_name);
-                let output = File::create(&self.ofile_names.last().unwrap()).unwrap();
-                let writer = BamWriter::build().write_header(true).from_stream(BufWriter::new(output), header.clone()).unwrap();
-                self.ofile_writers.push(writer);
+                self.tags.insert(tag_value, self.ofile_writers);
             }
         }
+        self.ofile_writers +=1;
+        let ofile = Path::new(&bc_file).file_stem().unwrap().to_str().unwrap();
+        self.ofile_names.push( format!("{}{}.bam", prefix, ofile) );
     }
 
     pub fn process_records_parallel(&self, records: &[Record], tag: &[u8; 2], chunk_size: usize) -> Vec<Vec<usize>> {
         // Initialize result buffers for each output file
-        let mut result: Vec<Vec<usize>> = vec![Vec::with_capacity(1_000_000); self.ofile_writers.len()];
+        let mut result: Vec<Vec<usize>> = vec![Vec::with_capacity(1_000_000); self.ofile_writers];
 
         // Collect tag_values with indices, in parallel
         let tag_values_with_indices: Vec<(usize, String)> = records.iter()
@@ -51,7 +51,7 @@ impl Subsetter {
         // Process records in parallel using par_chunks, and collect the chunk buffers
         let chunk_buffers: Vec<Vec<Vec<usize>>> = tag_values_with_indices.par_chunks(chunk_size).map(|chunk| {
             // Initialize temporary buffers for each output file in this chunk
-            let mut chunk_buffers: Vec<Vec<usize>> = vec![Vec::with_capacity(chunk.len()); self.ofile_writers.len()];
+            let mut chunk_buffers: Vec<Vec<usize>> = vec![Vec::with_capacity(chunk.len()); self.ofile_writers];
 
             // Iterate over each record in the chunk
             for (index, tag_value ) in chunk.iter() {

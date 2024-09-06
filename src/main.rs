@@ -2,13 +2,17 @@ use clap::Parser;
 //use this::cellids::CellIds;
 
 extern crate bam;
-use bam::RecordReader;
-
+use bam::{Record, RecordReader, RecordWriter, BamWriter};
+use std::fs::File;
+use std::io::BufWriter;
+use num_cpus;
 use std::time::SystemTime;
 
 use indicatif::{ProgressBar, MultiProgress, ProgressStyle};
 
 use multi_subset_bam::Subsetter;
+use std::path::PathBuf;
+
 
 #[derive(Parser)]
 #[clap(version = "0.1.0", author = "Stefan L. <stefan.lang@med.lu.se>")]
@@ -38,9 +42,20 @@ fn main() {
     let mut subsetter = Subsetter::new();
 
     for fname in opts.values.split(','){
-        subsetter.read_simple_list( fname.to_string(), opts.ofile.to_string(), reader.header().clone() );
+        subsetter.read_simple_list( fname.to_string(), opts.ofile.to_string()  );
     }
-    
+    let mut ofiles: Vec<BamWriter<BufWriter<_>>> = subsetter.ofile_names.clone().into_iter().map( |ofile_name| {
+        let o1 = PathBuf::from( ofile_name.to_string() );
+        let f1 = match File::create(o1){
+            Ok(file) => file,
+            Err(err) => panic!("The file {} cound not be created: {err}", ofile_name )
+        };
+        let output = BufWriter::new( f1 );
+        let writer = bam::BamWriter::build()
+            .write_header(true)
+            .from_stream(output, reader.header().clone() ).unwrap();
+        writer}
+    ).collect();
 
     let mut record = bam::Record::new();
     if opts.tag.len() != 2 {
@@ -58,9 +73,12 @@ fn main() {
     pb.set_message( "" );
 
     let mut reads = 0;
-    let split = 1_000_000_u64;
+    let mut lines = 0;
 
-    let mut records_tmp= Vec<Record>::with_capacity(1_000_000);
+    let chunk_size = 100_000;
+    let batch_size = chunk_size * num_cpus::get();
+
+    let mut records_tmp= Vec::<Record>::with_capacity( batch_size );
 
     loop {
         match reader.read_into(&mut record) {
@@ -69,19 +87,30 @@ fn main() {
             Err(e) => panic!("{}", e),
         }
         records_tmp.push( record.clone() );
+        lines +=1;
 
         if records_tmp.len() % 1_000_000 == 0{
             //println!("A log should be printed?");
-            pb.set_message( format!("{} mio reads processed", lines / split) );
+            pb.set_message( format!("{} mio reads processed", lines / 1_000_000) );
             pb.inc(1);
-            sorted_ids += subsetter.process_record( records_tmp, tag );
+            for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+                reads += cell_ids.len();
+                cell_ids.iter().for_each( |cell_id| {
+                    ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
+                });
+            }
             records_tmp.clear();
         }
 
     }
 
     if !records_tmp.is_empty() {
-        reads += subsetter.process_record(&records_tmp, &tag);
+        for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+            reads += cell_ids.len();
+            cell_ids.iter().for_each( |cell_id| {
+                    ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
+                });
+        }
     }
 
 
@@ -102,8 +131,6 @@ fn main() {
         },
         Err(e) => {println!("Error: {e:?}");}
     }
-
-    subsetter.print();
 
     
 }
