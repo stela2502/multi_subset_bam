@@ -1,12 +1,10 @@
 use rayon::prelude::*;
 use std::collections::BTreeMap;
 use std::fs::File;
-use std::io::{self, BufRead, BufWriter, BufReader};
-use std::path::{Path, PathBuf};
-use bam::{BamReader, BamWriter, Record, RecordWriter };
+use std::io::{BufRead, BufReader};
+use std::path::Path;
+use bam::Record;
 use bam::record::tags::TagValue;
-use num_cpus;
-use rayon::ThreadPoolBuilder;
 
 
 pub struct Subsetter {
