@@ -13,6 +13,7 @@ use multi_subset_bam::Subsetter;
 use std::path::PathBuf;
 use num_cpus;
 
+use rayon::ThreadPoolBuilder;
 
 
 #[derive(Parser)]
@@ -47,6 +48,9 @@ fn main() {
         Some(p) => num_cpus::get().min(*p),
         None => num_cpus::get()
     };
+
+    // Set the number of threads using the calculated number
+    ThreadPoolBuilder::new().num_threads(cpus).build_global().unwrap();
 
     let mut subsetter = Subsetter::new();
 
@@ -102,7 +106,7 @@ fn main() {
             //println!("A log should be printed?");
             pb.set_message( format!("{} mio reads processed", lines / 1_000_000) );
             pb.inc(1);
-            for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size, cpus ).iter().enumerate(){
+            for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
                 reads += cell_ids.len();
                 cell_ids.iter().for_each( |cell_id| {
                     ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
@@ -114,7 +118,7 @@ fn main() {
     }
 
     if !records_tmp.is_empty() {
-        for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size, cpus ).iter().enumerate(){
+        for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
             reads += cell_ids.len();
             cell_ids.iter().for_each( |cell_id| {
                     ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
