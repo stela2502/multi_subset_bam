@@ -5,6 +5,8 @@ use std::io::{self, BufRead, BufWriter, BufReader};
 use std::path::{Path, PathBuf};
 use bam::{BamReader, BamWriter, Record, RecordWriter };
 use bam::record::tags::TagValue;
+use num_cpus;
+use rayon::ThreadPoolBuilder;
 
 
 pub struct Subsetter {
@@ -36,7 +38,19 @@ impl Subsetter {
         self.ofile_names.push( format!("{}{}.bam", prefix, ofile) );
     }
 
-    pub fn process_records_parallel(&self, records: &[Record], tag: &[u8; 2], chunk_size: usize) -> Vec<Vec<usize>> {
+    /// the main data worker:
+    /// It collects the positions and tags of the records and matches them
+    /// using the par_chunks() functionality.
+    pub fn process_records_parallel(&self, records: &[Record], tag: &[u8; 2], chunk_size: usize, p: usize) -> Vec<Vec<usize>> {
+        // Get the number of available CPUs on the system
+        let available_cpus = num_cpus::get();
+        
+        // Use the minimum of the requested processors (p) and the system's available CPUs
+        let num_threads = std::cmp::min(p, available_cpus);
+
+        // Set the number of threads using the calculated number
+        ThreadPoolBuilder::new().num_threads(num_threads).build_global().unwrap();
+
         // Initialize result buffers for each output file
         let mut result: Vec<Vec<usize>> = vec![Vec::with_capacity(1_000_000); self.ofile_writers];
 

@@ -5,13 +5,14 @@ extern crate bam;
 use bam::{Record, RecordReader, RecordWriter, BamWriter};
 use std::fs::File;
 use std::io::BufWriter;
-use num_cpus;
 use std::time::SystemTime;
 
 use indicatif::{ProgressBar, MultiProgress, ProgressStyle};
 
 use multi_subset_bam::Subsetter;
 use std::path::PathBuf;
+use num_cpus;
+
 
 
 #[derive(Parser)]
@@ -29,6 +30,9 @@ struct Opts {
     /// the filename for the bam file subset
     #[clap(short, long)]
     ofile: String,
+    /// the numer of processors to use (default all)
+    #[clap(short, long)]
+    processors: Option<usize>,
 }
 
 
@@ -38,6 +42,11 @@ fn main() {
     let opts: Opts = Opts::parse();
 
     let mut reader = bam::BamReader::from_path( &opts.bam , 1).unwrap();
+
+    let cpus = match &opts.processors{
+        Some(p) => num_cpus::get().min(*p),
+        None => num_cpus::get()
+    };
 
     let mut subsetter = Subsetter::new();
 
@@ -93,7 +102,7 @@ fn main() {
             //println!("A log should be printed?");
             pb.set_message( format!("{} mio reads processed", lines / 1_000_000) );
             pb.inc(1);
-            for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+            for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size, cpus ).iter().enumerate(){
                 reads += cell_ids.len();
                 cell_ids.iter().for_each( |cell_id| {
                     ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
@@ -105,7 +114,7 @@ fn main() {
     }
 
     if !records_tmp.is_empty() {
-        for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+        for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size, cpus ).iter().enumerate(){
             reads += cell_ids.len();
             cell_ids.iter().for_each( |cell_id| {
                     ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
