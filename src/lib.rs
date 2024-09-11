@@ -36,6 +36,24 @@ impl Subsetter {
         self.ofile_names.push( format!("{}{}.bam", prefix, ofile) );
     }
 
+    pub fn process_records(&self, records: &[Record], tag: &[u8; 2]) -> Vec<Vec<usize>> {
+        // Initialize result buffers for each output file
+        let mut result: Vec<Vec<usize>> = vec![Vec::with_capacity(1_000_000); self.ofile_writers];
+
+        // Process each record sequentially
+        for (index, record) in records.iter().enumerate() {
+            // Get the tag value for the current record
+            if let Some(tag_value) = get_tag_value(record, tag) {
+                // If the tag_value exists, find the corresponding output file
+                if let Some(id) = self.tags.get(&tag_value) {
+                    result[*id].push(index); // Store the index of this record
+                }
+            }
+        }
+
+        result
+    }
+
     /// the main data worker:
     /// It collects the positions and tags of the records and matches them
     /// using the par_chunks() functionality.
@@ -52,11 +70,12 @@ impl Subsetter {
             })
             .collect();
 
+
         // Process records in parallel using par_chunks, and collect the chunk buffers
         let chunk_buffers: Vec<Vec<Vec<usize>>> = tag_values_with_indices.par_chunks(chunk_size).map(|chunk| {
             // Initialize temporary buffers for each output file in this chunk
             let mut chunk_buffers: Vec<Vec<usize>> = vec![Vec::with_capacity(chunk.len()); self.ofile_writers];
-
+            println!("Processing a chunk of size {}",chunk.len());
             // Iterate over each record in the chunk
             for (index, tag_value ) in chunk.iter() {
                 // If the tag_value exists, find the corresponding output file

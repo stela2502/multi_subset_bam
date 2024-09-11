@@ -106,7 +106,8 @@ fn main() {
             //println!("A log should be printed?");
             pb.set_message( format!("{} mio reads processed", lines / 1_000_000) );
             pb.inc(1);
-            for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+            //for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+            for ( ofile_id, cell_ids) in subsetter.process_records( &records_tmp, &tag ).iter().enumerate(){
                 reads += cell_ids.len();
                 cell_ids.iter().for_each( |cell_id| {
                     ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
@@ -118,7 +119,8 @@ fn main() {
     }
 
     if !records_tmp.is_empty() {
-        for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+        //for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
+        for ( ofile_id, cell_ids) in subsetter.process_records( &records_tmp, &tag ).iter().enumerate(){
             reads += cell_ids.len();
             cell_ids.iter().for_each( |cell_id| {
                     ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
