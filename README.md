@@ -54,9 +54,9 @@ install --git https://github.com/stela2502/multi_subset_bam
 
 You need to install Rust on your computer, then clone this repo and compile the tool for your machine:
 
-<script_start>
+```
 cargo build -r
-<script_end>
+```
 
 The executable will be `target/release/multi_subset_bam`.
 
@@ -64,12 +64,12 @@ The executable will be `target/release/multi_subset_bam`.
 
 On a Linux system:
 
-<script_start>
+```
 ./target/release/multi_subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_
 
 samtools view testData/outpath/subset_barcodes.bam | wc -l
 samtools view testData/outpath/subset_barcodes2.bam | wc -l
-<script_end>
+```
 
 This should show that there are 11 reads for the 4 barcodes.
 
@@ -79,8 +79,8 @@ By default, this tool will query the `CB:Z` tag (e.g. `'GAGCAGACAGGCAGTA'`) of t
 
 If you'd like to take advantage of the multiprocessor feature, you can set the number of threads using the `-p` option (e.g., to use 4 threads):
 
-<script_start>
+```
 ./target/release/multi_subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_ -p 4
-<script_end>
+```
 
 This will split the BAM file into multiple subsets while leveraging four processor threads to speed up the process.
