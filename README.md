@@ -12,7 +12,45 @@ By default, this tool will query the `CB:Z` tag (e.g. `'GAGCAGACAGGCAGTA'`) of t
 
 The latest version of `MultiSubsetBam` includes support for multiprocessor execution. This feature allows you to utilize multiple CPU cores to process large BAM files more efficiently. The program will automatically distribute the workload across available processors, speeding up the process of generating multiple subsets.
 
-## Install
+## Usage
+
+```
+multi_subset_bam -h
+
+multi_subset_bam 0.1.0
+Stefan L. <stefan.lang@med.lu.se>
+
+USAGE:
+    multi_subset_bam [OPTIONS] --bam <BAM> --values <VALUES> --ofile <OFILE>
+
+OPTIONS:
+    -b, --bam <BAM>                  the bam file you want to subset
+    -h, --help                       Print help information
+    -o, --ofile <OFILE>              the filename for the bam file subset
+    -p, --processors <PROCESSORS>    the numer of processors to use (default all)
+    -t, --tag <TAG>                  the bam tag you want to look for [default: CR]
+    -v, --values <VALUES>            the values of the bam tags file(s) (comma separated filenames)
+                                     to selet for (a file with one value per line)
+    -V, --version                    Print version information
+```
+
+This github repo contains an example of how the input files should look like.
+
+This is how you can run the test from the repo's main path:
+```
+multi_subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_
+```
+
+## Install 
+
+First of all you need to install Rust on your computer (https://www.rust-lang.org/tools/install).
+
+Then it is easiest to install the tool with:
+```
+install --git https://github.com/stela2502/multi_subset_bam
+```
+
+## Install from source 
 
 You need to install Rust on your computer, then clone this repo and compile the tool for your machine:
 
