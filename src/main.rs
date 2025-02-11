@@ -17,7 +17,8 @@ use rayon::ThreadPoolBuilder;
 
 
 #[derive(Parser)]
-#[clap(version = "0.1.0", author = "Stefan L. <stefan.lang@med.lu.se>")]
+#[clap(disable_version_flag = true)]  // This prevents the automatic --version
+#[clap(version = "0.2.0", author = "Stefan L. <stefan.lang@med.lu.se>")]
 struct Opts {
     /// the bam file you want to subset
     #[clap(short, long)]
@@ -25,9 +26,9 @@ struct Opts {
     /// the bam tag you want to look for
     #[clap(default_value="CR", short, long)]
     tag: String,
-    /// the values of the bam tags file(s) (comma separated filenames) to selet for (a file with one value per line)
-    #[clap(short, long)]
-    values: String,
+    /// the values of the bam tag file(s); each file stands for one group with one cell_id per line
+    #[clap(short, long, value_parser, num_args(1..), value_delimiter = ' ' )] 
+    values: Vec<String>,
     /// the filename for the bam file subset
     #[clap(short, long)]
     ofile: String,
@@ -54,7 +55,7 @@ fn main() {
 
     let mut subsetter = Subsetter::new();
 
-    for fname in opts.values.split(','){
+    for fname in opts.values {
         subsetter.read_simple_list( fname.to_string(), opts.ofile.to_string()  );
     }
     let mut ofiles: Vec<BamWriter<BufWriter<_>>> = subsetter.ofile_names.clone().into_iter().map( |ofile_name| {
