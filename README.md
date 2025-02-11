@@ -73,7 +73,7 @@ samtools view testData/outpath/subset_barcodes2.bam | wc -l
 
 This should show that there are 11 reads for the 4 barcodes.
 
-By default, this tool will query the `CB:Z` tag (e.g. `'GAGCAGACAGGCAGTA'`) of the BAM file and only write the reads matching the entries in the 'values' barcodes table into the outfile. If your split 10x bam files the CR tag contains corrected cell ids. You should query them instead (-t CR).
+By default, this tool will query the `CR:Z` tag (e.g. `'GAGCAGACAGGCAGTA'`) of the BAM file and only write the reads matching the entries in the 'values' barcodes table into the outfile. If your split 10x bam files the CB tag contains corrected cell ids. You should query them instead (-t CB), but you also need provide cell ids with a "-1" at the end.
 
 ## Multiprocessing Example
 
