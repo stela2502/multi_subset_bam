@@ -28,8 +28,9 @@ impl Subsetter {
         let reader = BufReader::new(file);
         for line in reader.lines() {
             if let Ok(tag_value) = line {
-                let clean_tag = tag_value.strip_suffix("-1").unwrap_or(&tag_value);
-                self.tags.insert(clean_tag.to_string(), self.ofile_writers);
+                /*let clean_tag = tag_value.strip_suffix("-1").unwrap_or(&tag_value);
+                self.tags.insert(clean_tag.to_string(), self.ofile_writers); */
+                self.tags.insert(tag_value.to_string(), self.ofile_writers);
             }
         }
         self.ofile_writers +=1;
