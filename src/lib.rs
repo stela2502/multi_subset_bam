@@ -44,7 +44,10 @@ impl Subsetter {
         // Process each record sequentially
         for (index, record) in records.iter().enumerate() {
             // Get the tag value for the current record
+            
             if let Some(tag_value) = get_tag_value(record, tag) {
+                #[cfg(debug_assertions)]
+                println!("I found tag {}", tag_value );
                 // If the tag_value exists, find the corresponding output file
                 if let Some(id) = self.tags.get(&tag_value) {
                     result[*id].push(index); // Store the index of this record
@@ -76,9 +79,12 @@ impl Subsetter {
         let chunk_buffers: Vec<Vec<Vec<usize>>> = tag_values_with_indices.par_chunks(chunk_size).map(|chunk| {
             // Initialize temporary buffers for each output file in this chunk
             let mut chunk_buffers: Vec<Vec<usize>> = vec![Vec::with_capacity(chunk.len()); self.ofile_writers];
+            #[cfg(debug_assertions)]
             println!("Processing a chunk of size {}",chunk.len());
             // Iterate over each record in the chunk
             for (index, tag_value ) in chunk.iter() {
+                #[cfg(debug_assertions)]
+                println!("I found tag {}", tag_value );
                 // If the tag_value exists, find the corresponding output file
                 if let Some(id) = self.tags.get(tag_value) {
                     chunk_buffers[*id].push(*index); // Store the index of this record within the chunk
