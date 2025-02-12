@@ -103,6 +103,17 @@ impl Subsetter {
 
         result
     }
+    pub fn process_record(&self, record: &Record, tag:&[u8;2] ) -> Option<&usize> {
+        if let Some(tag_value) = get_tag_value(record, tag) {
+            #[cfg(debug_assertions)]
+            println!("I found tag {}", tag_value );
+            // If the tag_value exists, find the corresponding output file
+            self.tags.get(&tag_value)
+        }else {
+            None
+        }
+    }
+
 }
 
 fn get_tag_value(record: &Record, tag: &[u8; 2]) -> Option<String> {
