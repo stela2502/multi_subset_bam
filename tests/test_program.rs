@@ -16,6 +16,12 @@ fn test_multi_subset_bam() {
         "./target/debug/multi_subset_bam"
     };
 
+    let path = Path::new("testData/output");
+    if path.exists() {
+        fs::remove_dir_all(path).expect("Failed to remove directory");
+    }
+
+
     let args = &[
         "-b", "testData/test.bam",
         "-v", "testData/barcodes.txt testData/barcodes2.txt",
