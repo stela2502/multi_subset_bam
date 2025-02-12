@@ -1,8 +1,7 @@
 use clap::Parser;
 //use this::cellids::CellIds;
 
-extern crate bam;
-use bam::{ RecordReader, RecordWriter, BamWriter};
+use rust_htslib::{bam, bam::Read, bam::Writer};
 use std::fs::{self,File};
 use std::path::Path;
 use std::io::BufWriter;
@@ -36,11 +35,13 @@ fn main() {
 
     let opts: Opts = Opts::parse();
 
-    let mut reader = bam::BamReader::from_path( &opts.bam , 1).unwrap();
+    let mut reader = bam::Reader::from_path( &opts.bam  ).unwrap();
+    let header = bam::Header::from_template(reader.header());
 
     let mut subsetter = Subsetter::new();
+    let size = opts.values.len();
 
-    for fname in opts.values {
+    for fname in &opts.values {
         subsetter.read_simple_list( fname.to_string(), opts.ofile.to_string()  );
     }
 
@@ -56,21 +57,13 @@ fn main() {
             println!("New output directory created successfully!");
         }
     }
+    
+    let mut ofiles = Vec::<_>::with_capacity( size );
+    for fname in &subsetter.ofile_names {
+        ofiles.push(  bam::Writer::from_path( fname, &header, bam::Format::Bam).unwrap() );
+    }
 
-    let mut ofiles: Vec<BamWriter<BufWriter<_>>> = subsetter.ofile_names.clone().into_iter().map( |ofile_name| {
-        let o1 = PathBuf::from( ofile_name.to_string() );
-        let f1 = match File::create(o1){
-            Ok(file) => file,
-            Err(err) => panic!("The file {} cound not be created: {err}", ofile_name )
-        };
-        let output = BufWriter::new( f1 );
-        let writer = bam::BamWriter::build()
-            .write_header(true)
-            .from_stream(output, reader.header().clone() ).unwrap();
-        writer}
-    ).collect();
 
-    let mut record = bam::Record::new();
     if opts.tag.len() != 2 {
         panic!("The tag needs to be exactly two chars long - not {}", &opts.tag);
     }
@@ -82,21 +75,19 @@ fn main() {
     //let chunk_size = 100_000;
     //let batch_size = chunk_size * num_cpus::get();
 
-    loop {
-        match reader.read_into(&mut record) {
-            Ok(true) => {},
-            Ok(false) => break,
-            Err(e) => panic!("{}", e),
+    for r in reader.records() {
+        if let Ok(record) = r {
+            lines+=1;
+            match subsetter.process_record( &record, &tag ) {
+                Some(ofile_id) => {
+                    reads +=1;
+                    ofiles[*ofile_id].write(&record).unwrap()
+                },
+                None => {}
+            }
+        }else {
+            panic!("There was an error r4eading from the input file!");
         }
-        lines+=1;
-        match subsetter.process_record( &record, &tag ) {
-            Some(ofile_id) => {
-                reads +=1;
-                ofiles[*ofile_id].write(&record).unwrap()
-            },
-            None => {}
-        }
-
     }
 
 

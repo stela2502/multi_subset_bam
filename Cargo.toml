@@ -9,6 +9,4 @@ edition = "2021"
 
 bam = "*"
 clap = { version = "4", features = ["derive"] }
-indicatif = {version = "*", features = ["rayon"]}
-rayon = "1.5"
-num_cpus = "1.13"  # Or the latest version
+rust-htslib = "0.49.0"
