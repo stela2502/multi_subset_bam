@@ -80,7 +80,7 @@ By default, this tool will query the `CR:Z` tag (e.g. `'GAGCAGACAGGCAGTA'`) of t
 If you'd like to take advantage of the multiprocessor feature, you can set the number of threads using the `-p` option (e.g., to use 4 threads):
 
 ```
-./target/release/multi_subset_bam -b testData/test.bam -v testData/barcodes.txt,testData/barcodes2.txt -o testData/outpath/subset_ -p 4
+./target/release/multi_subset_bam -b testData/test.bam -v testData/barcodes.txt testData/barcodes2.txt -o testData/outpath/subset_ -p 4
 ```
 
 This will split the BAM file into multiple subsets while leveraging four processor threads to speed up the process.

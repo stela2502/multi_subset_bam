@@ -3,7 +3,8 @@ use clap::Parser;
 
 extern crate bam;
 use bam::{Record, RecordReader, RecordWriter, BamWriter};
-use std::fs::File;
+use std::fs::{self,File};
+use std::path::Path;
 use std::io::BufWriter;
 use std::time::SystemTime;
 
@@ -58,6 +59,20 @@ fn main() {
     for fname in opts.values {
         subsetter.read_simple_list( fname.to_string(), opts.ofile.to_string()  );
     }
+
+    // check if the outfile can be written and create the out folder if it does not exist
+    let outpath = match Path::new(&opts.ofile).parent(){
+        Some(path) => path,
+        None => panic!("Oops - I could not get the parent path of the outfile prefix {}", &opts.ofile),
+    };
+    if fs::metadata(&outpath).is_err() {
+        if let Err(err) = fs::create_dir_all(&outpath) {
+            eprintln!("Error creating directory {}: {}", outpath.display(), err);
+        } else {
+            println!("New output directory created successfully!");
+        }
+    }
+
     let mut ofiles: Vec<BamWriter<BufWriter<_>>> = subsetter.ofile_names.clone().into_iter().map( |ofile_name| {
         let o1 = PathBuf::from( ofile_name.to_string() );
         let f1 = match File::create(o1){
