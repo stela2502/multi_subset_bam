@@ -33,9 +33,6 @@ struct Opts {
     /// the filename for the bam file subset
     #[clap(short, long)]
     ofile: String,
-    /// the numer of processors to use (default all)
-    #[clap(short, long)]
-    processors: Option<usize>,
 }
 
 
@@ -51,8 +48,7 @@ fn main() {
         None => num_cpus::get()
     };
 
-    // Set the number of threads using the calculated number
-    ThreadPoolBuilder::new().num_threads(cpus).build_global().unwrap();
+
 
     let mut subsetter = Subsetter::new();
 
@@ -104,8 +100,8 @@ fn main() {
     let mut reads = 0;
     let mut lines = 0;
 
-    let chunk_size = 100_000;
-    let batch_size = chunk_size * num_cpus::get();
+    //let chunk_size = 100_000;
+    //let batch_size = chunk_size * num_cpus::get();
 
     let mut records_tmp= Vec::<Record>::with_capacity( batch_size );
 
@@ -115,34 +111,15 @@ fn main() {
             Ok(false) => break,
             Err(e) => panic!("{}", e),
         }
-        records_tmp.push( record.clone() );
-        lines +=1;
-
-        if records_tmp.len() % 1_000_000 == 0{
-            //println!("A log should be printed?");
-            pb.set_message( format!("{} mio reads processed", lines / 1_000_000) );
-            pb.inc(1);
-            //for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
-            for ( ofile_id, cell_ids) in subsetter.process_records( &records_tmp, &tag ).iter().enumerate(){
-                reads += cell_ids.len();
-                cell_ids.iter().for_each( |cell_id| {
-                    ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
-                });
-            }
-            records_tmp.clear();
+        match subsetter.process_record( &record, &tag ) {
+            Some(ofile_id) => {
+                ofiles[*ofile_id].write(&record).unwrap()
+            },
+            None => {}
         }
 
     }
 
-    if !records_tmp.is_empty() {
-        //for ( ofile_id, cell_ids) in subsetter.process_records_parallel( &records_tmp, &tag, chunk_size ).iter().enumerate(){
-        for ( ofile_id, cell_ids) in subsetter.process_records( &records_tmp, &tag ).iter().enumerate(){
-            reads += cell_ids.len();
-            cell_ids.iter().for_each( |cell_id| {
-                    ofiles[ofile_id].write(&records_tmp[*cell_id]).unwrap()
-                });
-        }
-    }
 
 
     match now.elapsed() {
