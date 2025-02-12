@@ -2,19 +2,14 @@ use clap::Parser;
 //use this::cellids::CellIds;
 
 extern crate bam;
-use bam::{Record, RecordReader, RecordWriter, BamWriter};
+use bam::{ RecordReader, RecordWriter, BamWriter};
 use std::fs::{self,File};
 use std::path::Path;
 use std::io::BufWriter;
 use std::time::SystemTime;
 
-use indicatif::{ProgressBar, MultiProgress, ProgressStyle};
-
 use multi_subset_bam::Subsetter;
 use std::path::PathBuf;
-use num_cpus;
-
-use rayon::ThreadPoolBuilder;
 
 
 #[derive(Parser)]
@@ -42,13 +37,6 @@ fn main() {
     let opts: Opts = Opts::parse();
 
     let mut reader = bam::BamReader::from_path( &opts.bam , 1).unwrap();
-
-    let cpus = match &opts.processors{
-        Some(p) => num_cpus::get().min(*p),
-        None => num_cpus::get()
-    };
-
-
 
     let mut subsetter = Subsetter::new();
 
@@ -87,15 +75,6 @@ fn main() {
         panic!("The tag needs to be exactly two chars long - not {}", &opts.tag);
     }
     let tag: [u8; 2]  = opts.tag.as_bytes().try_into().unwrap();
-    
-    let m = MultiProgress::new();
-    let pb = m.add(ProgressBar::new(5000));
-
-    let spinner_style = ProgressStyle::with_template("{prefix:.bold.dim} {spinner} {wide_msg}")
-            .unwrap()
-            .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
-    pb.set_style(spinner_style);
-    pb.set_message( "" );
 
     let mut reads = 0;
     let mut lines = 0;
@@ -103,16 +82,16 @@ fn main() {
     //let chunk_size = 100_000;
     //let batch_size = chunk_size * num_cpus::get();
 
-    let mut records_tmp= Vec::<Record>::with_capacity( batch_size );
-
     loop {
         match reader.read_into(&mut record) {
             Ok(true) => {},
             Ok(false) => break,
             Err(e) => panic!("{}", e),
         }
+        lines+=1;
         match subsetter.process_record( &record, &tag ) {
             Some(ofile_id) => {
+                reads +=1;
                 ofiles[*ofile_id].write(&record).unwrap()
             },
             None => {}
@@ -135,7 +114,7 @@ fn main() {
             let min = milli % 60;
             milli= (milli -min) /60;
 
-            println!("\nI have selected {reads} reads from the bam file in {milli}h {min}min {sec} sec {mil}milli sec\n");
+            println!("\nI have selected {reads}/{lines} reads from the bam file in {milli}h {min}min {sec} sec {mil}milli sec\n");
         },
         Err(e) => {println!("Error: {e:?}");}
     }
