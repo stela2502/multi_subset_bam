@@ -10,6 +10,8 @@ use std::time::SystemTime;
 use multi_subset_bam::Subsetter;
 use std::path::PathBuf;
 
+/// Can split one BAM file into as many as 1000 sub bam files using and BAM tag value.
+/// The values to group should be provided in one value per line text files.
 
 #[derive(Parser)]
 #[clap(disable_version_flag = true)]  // This prevents the automatic --version
