@@ -6,17 +6,32 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build:
-
+  build-test:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: ./target/debug/multi_subset_bam --bam testData/test.bam --values testData/barcodes.txt,testData/barcodes2.txt --ofile testData/outpath/subset_
+      # 1. Check out your code
+      - uses: actions/checkout@v4
+
+      # 2. Install required native libraries for rust-htslib
+      - name: Install HTSlib dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libhts-dev \
+            libbz2-dev \
+            liblzma-dev \
+            libz-dev \
+            pkg-config
+
+      # 3. Set up Rust
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      # 4. Build and run tests
+      - name: Build
+        run: cargo build --verbose
+      - name: Test
+        run: cargo test --verbose
